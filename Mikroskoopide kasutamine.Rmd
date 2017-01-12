@@ -1,0 +1,19 @@
+---
+title: "Mikroskoopide kasutamine"
+output: html_notebook
+---
+
+
+
+```{r}
+library(knitr)
+library(dplyr)
+library(readr)
+d <- read_csv("data/use_data.csv")
+sumtab <- d %>% 
+  mutate(Time = End-Start) %>%
+  group_by(Group, Microscope) %>% 
+  summarise(Time = sum(Time))
+knitr::kable(sumtab)
+```
+

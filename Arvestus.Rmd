@@ -1,0 +1,39 @@
+---
+title: "Mikroskoopide kasutamine"
+author: "Taavi Päll"
+date: "`r Sys.Date()`"
+output: pdf_document
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(lubridate)
+mikro <- read_excel("data/kasutamine.xlsx")
+hind <- data_frame(hind = c(1,1,1,5,5), mikroskoop = c("Olympus BX61","Zeiss Axiovert","Zeiss Discovery V8","Zeiss LSM DUO","TILL Photonics iMIC"))
+```
+
+```{r}
+vahe <- mikro %>% 
+  filter(kuup < "2016-10-01") %>% 
+  left_join(hind) %>% 
+  mutate(algus = algus + (as_date(kuup) - as_date(algus)),
+         lopp = lopp + (as_date(kuup) - as_date(lopp)),
+         kogus = difftime(lopp, algus, units = "hours"),
+         kokku = as.numeric(kogus*hind),
+         grupp = trimws(grupp)) 
+pealkiri <- paste("Mikroskoopide kasutamine TTÜ Geenitehnoloogia instituudis vahemikus",paste(as_date(range(vahe$kuup)), collapse = " kuni "))
+vahe %>% group_by(grupp) %>%
+  summarise(Summa = round(sum(kokku), 2),
+            Asutus = "GTI") %>%
+  select(3,1,2) %>% 
+  filter(complete.cases(.)) %>% # hack to remove NA line 
+  knitr::kable(col.names = c("Asutus", "Grupp",  "Summa, eur"), caption = pealkiri)
+```
+

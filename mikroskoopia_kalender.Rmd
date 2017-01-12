@@ -1,0 +1,38 @@
+---
+title: "Mikroskoopide kasutamine"
+output:
+  html_document: default
+css: flat-table.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r pressure, echo=FALSE, include=FALSE}
+library(lubridate)
+dates <- seq(ymd(today()), ymd(today()) + dweeks(6), by = '1 day')
+hrs <- 6:23
+microscopes <- c("Olympus BX61", "Zeiss Discovery V8", "Zeiss Axiovert", "Zeiss LSM DUO", "TILL Photonics iMIC")
+dayschedule <- data.frame(replicate(length(microscopes), rep("", length(hrs))))
+colnames(dayschedule) <- microscopes
+rownames(dayschedule) <- hrs
+```
+
+```{r}
+captions <- paste0("**",dates, "**. WRITE CLEARLY YOUR **FULL NAME** and **GROUP**! [Taavi Päll](taavi.pall@ttu.ee). [Info and pricing at GTI](http://bit.ly/2fNytTm)")
+tabfun <- function(x) knitr::kable(dayschedule, 
+                                   booktabs = TRUE, 
+                                   caption = x, 
+                                   row.names = TRUE,
+                                   align = 'c', 
+                                   pad = 6)
+```
+
+```{r, results = 'asis'}
+out <- lapply(captions, tabfun)
+names(out) <- dates -1
+out
+```
+
+

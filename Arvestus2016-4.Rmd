@@ -1,0 +1,56 @@
+---
+title: "Mikroskoopide kasutamine"
+author: "Taavi Päll"
+date: '`r Sys.Date()`'
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+geometry: margin=1in
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(lubridate)
+sheets <- excel_sheets("data/kasutamine.xlsx")
+mikro <- lapply(sheets, function(x) read_excel("data/kasutamine.xlsx", sheet = x))
+mikro <- bind_rows(mikro)
+hind <- data_frame(hind = c(1,1,1,5,5), mikroskoop = c("Olympus BX61","Zeiss Axiovert","Zeiss Discovery V8","Zeiss LSM DUO","TILL Photonics iMIC"))
+```
+
+```{r}
+vahe <- mikro %>% 
+  filter(kuup > "2016-10-01") %>% 
+  left_join(hind) %>% 
+  mutate(algus = algus + (as_date(kuup) - as_date(algus)),
+         lopp = lopp + (as_date(kuup) - as_date(lopp)),
+         kogus = difftime(lopp, algus, units = "hours"),
+         kokku = as.numeric(kogus*hind),
+         grupp = trimws(grupp)) 
+pealkiri <- paste0("Mikroskoopide kasutamise arved TTÜ Geenitehnoloogia instituudis vahemikus ", paste(as_date(range(vahe$kuup)), collapse = " kuni "), ". Grupp 'GTI' - praktilise valgusmikroskoopia kursus, kogu ruumi broneerimine.")
+vahe %>% group_by(grupp) %>%
+  summarise(Summa = round(sum(kokku), 2),
+            Asutus = "GTI") %>%
+  select(3,1,2) %>% 
+  filter(complete.cases(.)) %>% # hack to remove NA line 
+  knitr::kable(col.names = c("Asutus", "Grupp",  "Summa, eur"), caption = pealkiri)
+```
+
+
+
+
+
+```{r}
+vahe %>% group_by(grupp, mikroskoop) %>%
+  summarise(Kokku = round(sum(kogus), 2)) %>% 
+  knitr::kable(col.names = c("Grupp", "Mikroskoop", "Kasutus, tundi"), caption = paste("Mikroskoopide kasutamine tundides töögruppide poolt.  Ajavahemik", paste(as_date(range(vahe$kuup)), collapse = " kuni "), ". Grupp 'GTI' - praktilise valgusmikroskoopia kursus, kogu ruumi broneerimine."))
+```
+
+
+
